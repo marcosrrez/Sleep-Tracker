@@ -1,51 +1,48 @@
-}let scores = JSON.parse(localStorage.getItem('sleepScores') || '[]');
+const scoreForm = document.getElementById("scoreForm");
+const scoreInput = document.getElementById("scoreInput");
+const scoreHistory = document.getElementById("scoreHistory");
+const averageScore = document.getElementById("averageScore");
+const highestScore = document.getElementById("highestScore");
+const lowestScore = document.getElementById("lowestScore");
 
-function calculateScore() {
-    let score = 0;
-    if (document.getElementById('phoneParked').checked) score++;
-    if (document.getElementById('bedTime').checked) score++;
-    if (document.getElementById('wakeTime').checked) score++;
-    document.getElementById('todayScore').textContent = score + '/3';
-    return score;
-}
+let scores = [];
 
 function updateStats() {
-    const recentScores = scores.slice(-7);
-    const average = recentScores.reduce((a, b) => a + b.score, 0) / (recentScores.length || 1);
-    document.getElementById('weeklyAverage').textContent = average.toFixed(1);
-
-    let streak = 0;
-    for (let i = scores.length - 1; i >= 0; i--) {
-        if (scores[i].score === 3) streak++;
-        else break;
+    if (scores.length === 0) {
+        averageScore.textContent = "0";
+        highestScore.textContent = "0";
+        lowestScore.textContent = "0";
+        return;
     }
-    document.getElementById('currentStreak').textContent = streak + ' days';
+
+    const sum = scores.reduce((a, b) => a + b, 0);
+    const avg = (sum / scores.length).toFixed(2);
+    const max = Math.max(...scores);
+    const min = Math.min(...scores);
+
+    averageScore.textContent = avg;
+    highestScore.textContent = max;
+    lowestScore.textContent = min;
 }
 
 function updateHistory() {
-    const history = document.getElementById('scoreHistory');
-    history.innerHTML = '';
-    scores.slice().reverse().forEach(entry => {
-        const div = document.createElement('div');
-        div.className = 'history-entry';
-        div.textContent = `${entry.date}: ${entry.score}/3 points`;
-        history.appendChild(div);
+    scoreHistory.innerHTML = "";
+    scores.forEach((score, index) => {
+        const entry = document.createElement("div");
+        entry.className = "history-entry";
+        entry.textContent = `Score ${index + 1}: ${score}`;
+        scoreHistory.appendChild(entry);
     });
 }
 
-function saveScore() {
-    const score = calculateScore();
-    const today = new Date().toLocaleDateString();
-    scores = scores.filter(s => s.date !== today);
-    scores.push({ date: today, score: score });
-    localStorage.setItem('sleepScores', JSON.stringify(scores));
+scoreForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const score = parseInt(scoreInput.value);
+    if (isNaN(score)) return;
+
+    scores.push(score);
+    scoreInput.value = "";
+
     updateStats();
     updateHistory();
-}
-
-document.getElementById('phoneParked').addEventListener('change', calculateScore);
-document.getElementById('bedTime').addEventListener('change', calculateScore);
-document.getElementById('wakeTime').addEventListener('change', calculateScore);
-
-updateStats();
-updateHistory();
+});
