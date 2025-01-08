@@ -2,51 +2,324 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Score Tracker</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <title>Sleep Habits Tracker</title>
+    <style>
+        :root {
+            --claude-bg: #FFFFFF;
+            --claude-text: #141619;
+            --claude-border: #E5E7EB;
+            --claude-primary: #5A469B;
+            --claude-primary-hover: #453276;
+            --claude-secondary-bg: #F9FAFB;
+            --claude-card-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Söhne", sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--claude-bg);
+            color: var(--claude-text);
+        }
+        
+        h1, h2, h3 {
+            font-weight: 600;
+            color: var(--claude-text);
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+        
+        .card {
+            background: var(--claude-bg);
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--claude-border);
+            box-shadow: var(--claude-card-shadow);
+            margin-bottom: 24px;
+        }
+        
+        .habit-card {
+            background: var(--claude-secondary-bg);
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border: 1px solid var(--claude-border);
+        }
+        
+        .score-input {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        
+        button {
+            background: var(--claude-primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background: var(--claude-primary-hover);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: var(--claude-secondary-bg);
+            padding: 16px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid var(--claude-border);
+        }
+        
+        .habit-law {
+            border-left: 3px solid var(--claude-primary);
+            padding-left: 16px;
+            margin: 20px 0;
+        }
+        
+        #scoreHistory {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--claude-border);
+            border-radius: 6px;
+        }
+        
+        .history-entry {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--claude-border);
+        }
+        
+        .history-entry:hover {
+            background: var(--claude-secondary-bg);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .secondary-button {
+            background: var(--claude-secondary-bg);
+            color: var(--claude-text);
+            border: 1px solid var(--claude-border);
+        }
+        
+        .secondary-button:hover {
+            background: var(--claude-border);
+        }
+    </style>
 </head>
 <body>
+    <h1>Sleep Habits Tracker</h1>
+    
     <div class="container">
-        <header>
-            <h1>Score Tracker</h1>
-            <p>Keep track of your daily scores with ease.</p>
-        </header>
-
-        <main>
-            <section class="card">
-                <h2>Enter Today's Score</h2>
-                <form id="scoreForm">
-                    <input type="number" id="scoreInput" placeholder="Enter your score" required>
-                    <button type="submit"><i class="fas fa-save"></i> Save Score</button>
-                </form>
-            </section>
-
-            <section class="card">
-                <h2>Statistics</h2>
+        <div class="main-content">
+            <div class="card">
+                <h2>Daily Sleep Score</h2>
+                <div class="score-input">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="phoneParked"> Phone parked by 9 PM
+                    </label>
+                </div>
+                <div class="score-input">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="bedTime"> In bed by 10 PM
+                    </label>
+                </div>
+                <div class="score-input">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="wakeTime"> Woke up at 5 AM
+                    </label>
+                </div>
+                <div class="button-group">
+                    <button onclick="saveScore()">Save Today's Score</button>
+                    <button onclick="exportToCSV()" class="secondary-button">Export to CSV</button>
+                </div>
+                
                 <div class="stats">
                     <div class="stat-card">
-                        <h3 id="averageScore">0</h3>
-                        <p>Average Score</p>
+                        <h3>Today's Score</h3>
+                        <p id="todayScore">0/3</p>
                     </div>
                     <div class="stat-card">
-                        <h3 id="highestScore">0</h3>
-                        <p>Highest Score</p>
+                        <h3>Weekly Average</h3>
+                        <p id="weeklyAverage">0.0</p>
                     </div>
                     <div class="stat-card">
-                        <h3 id="lowestScore">0</h3>
-                        <p>Lowest Score</p>
+                        <h3>Current Streak</h3>
+                        <p id="currentStreak">0 days</p>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <section class="card">
+            <div class="card">
+                <h2>Sleep Habit Framework</h2>
+                
+                <div class="habit-law">
+                    <h3>1. Make it Obvious</h3>
+                    <p>Create clear environmental triggers for sleep:</p>
+                    <div class="habit-card">
+                        • Set a "wind down" alarm for 9:00 PM<br>
+                        • Place phone charger in another room<br>
+                        • Keep bedroom cool and dark<br>
+                        • Leave curtains slightly open for morning light
+                    </div>
+                </div>
+
+                <div class="habit-law">
+                    <h3>2. Make it Attractive</h3>
+                    <p>Bundle sleep routine with enjoyable activities:</p>
+                    <div class="habit-card">
+                        • Evening tea ritual<br>
+                        • Relaxing stretches<br>
+                        • Reading time<br>
+                        • Calming music or audiobooks
+                    </div>
+                </div>
+
+                <div class="habit-law">
+                    <h3>3. Make it Easy</h3>
+                    <p>Reduce friction in your evening routine:</p>
+                    <div class="habit-card">
+                        • Prepare next day's essentials before 9 PM<br>
+                        • Set up "Do Not Disturb" mode<br>
+                        • Create a dedicated phone parking station<br>
+                        • Pre-plan morning activities
+                    </div>
+                </div>
+
+                <div class="habit-law">
+                    <h3>4. Make it Satisfying</h3>
+                    <p>Create immediate rewards:</p>
+                    <div class="habit-card">
+                        • Track your progress daily<br>
+                        • Celebrate streaks<br>
+                        • Notice improved energy and focus<br>
+                        • Share progress with accountability partner
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="card">
                 <h2>Score History</h2>
                 <div id="scoreHistory"></div>
-            </section>
-        </main>
+            </div>
+
+            <div class="card">
+                <h2>Sleep Science Tips</h2>
+                <div class="habit-card">
+                    <strong>Why 10 PM - 5 AM?</strong>
+                    <p>This schedule aligns with natural circadian rhythms and provides 7 hours of sleep, which falls within the recommended 7-9 hours for adults.</p>
+                </div>
+                <div class="habit-card">
+                    <strong>Blue Light Impact</strong>
+                    <p>Screen exposure before bed suppresses melatonin production, making it harder to fall asleep. That's why parking your phone by 9 PM is crucial.</p>
+                </div>
+                <div class="habit-card">
+                    <strong>Temperature Matters</strong>
+                    <p>Your body temperature naturally drops during sleep. A cool room (65-68°F/18-20°C) helps facilitate this process.</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        let scores = JSON.parse(localStorage.getItem('sleepScores') || '[]');
+        
+        function calculateScore() {
+            let score = 0;
+            if (document.getElementById('phoneParked').checked) score++;
+            if (document.getElementById('bedTime').checked) score++;
+            if (document.getElementById('wakeTime').checked) score++;
+            document.getElementById('todayScore').textContent = score + '/3';
+            return score;
+        }
+
+        function updateStats() {
+            const recentScores = scores.slice(-7);
+            const average = recentScores.reduce((a, b) => a + b.score, 0) / (recentScores.length || 1);
+            document.getElementById('weeklyAverage').textContent = average.toFixed(1);
+
+            let streak = 0;
+            for (let i = scores.length - 1; i >= 0; i--) {
+                if (scores[i].score === 3) streak++;
+                else break;
+            }
+            document.getElementById('currentStreak').textContent = streak + ' days';
+        }
+
+        function updateHistory() {
+            const history = document.getElementById('scoreHistory');
+            history.innerHTML = '';
+            scores.slice().reverse().forEach(entry => {
+                const div = document.createElement('div');
+                div.className = 'history-entry';
+                div.textContent = `${entry.date}: ${entry.score}/3 points`;
+                history.appendChild(div);
+            });
+        }
+
+        function saveScore() {
+            const score = calculateScore();
+            const today = new Date().toLocaleDateString();
+            scores = scores.filter(s => s.date !== today);
+            scores.push({ date: today, score: score });
+            localStorage.setItem('sleepScores', JSON.stringify(scores));
+            updateStats();
+            updateHistory();
+        }
+
+        function exportToCSV() {
+            const csvContent = [
+                ['Date', 'Score'],
+                ...scores.map(entry => [entry.date, entry.score])
+            ].map(row => row.join(',')).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'sleep_scores.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.getElementById('phoneParked').addEventListener('change', calculateScore);
+        document.getElementById('bedTime').addEventListener('change', calculateScore);
+        document.getElementById('wakeTime').addEventListener('change', calculateScore);
+
+        updateStats();
+        updateHistory();
+    </script>
 </body>
 </html>
